@@ -19,7 +19,7 @@
 
   <ItemGroup>
     <Reference Include="HRD_DataLibrary">
-      <HintPath>..\..\HRD_DataLibrary\HRD_DataLibrary\bin\Release\netcoreapp2.0\HRD_DataLibrary.dll</HintPath>
+      <HintPath>..\..\HRD_DataLibrary\HRD_DataLibrary\bin\Release\HRD_DataLibrary.dll</HintPath>
     </Reference>
   </ItemGroup>
 
