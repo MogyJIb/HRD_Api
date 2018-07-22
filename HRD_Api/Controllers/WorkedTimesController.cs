@@ -23,7 +23,7 @@ namespace HRD_Api.Controllers
         [HttpGet]
         public IEnumerable<WorkedTime> GetWorkedTime()
         {
-            return _context.WorkedTime;
+            return _context.WorkedTimes;
         }
 
         // GET: api/worked_times/5
@@ -35,7 +35,7 @@ namespace HRD_Api.Controllers
                 return BadRequest(ModelState);
             }
 
-            var workedTime = await _context.WorkedTime.SingleOrDefaultAsync(m => m.WorkedTimeId == id);
+            var workedTime = await _context.WorkedTimes.SingleOrDefaultAsync(m => m.WorkedTimeId == id);
 
             if (workedTime == null)
             {
@@ -89,7 +89,7 @@ namespace HRD_Api.Controllers
                 return BadRequest(ModelState);
             }
 
-            _context.WorkedTime.Add(workedTime);
+            _context.WorkedTimes.Add(workedTime);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetWorkedTime", new { id = workedTime.WorkedTimeId }, workedTime);
@@ -104,13 +104,13 @@ namespace HRD_Api.Controllers
                 return BadRequest(ModelState);
             }
 
-            var workedTime = await _context.WorkedTime.SingleOrDefaultAsync(m => m.WorkedTimeId == id);
+            var workedTime = await _context.WorkedTimes.SingleOrDefaultAsync(m => m.WorkedTimeId == id);
             if (workedTime == null)
             {
                 return NotFound();
             }
 
-            _context.WorkedTime.Remove(workedTime);
+            _context.WorkedTimes.Remove(workedTime);
             await _context.SaveChangesAsync();
 
             return Ok(workedTime);
@@ -118,7 +118,7 @@ namespace HRD_Api.Controllers
 
         private bool WorkedTimeExists(int id)
         {
-            return _context.WorkedTime.Any(e => e.WorkedTimeId == id);
+            return _context.WorkedTimes.Any(e => e.WorkedTimeId == id);
         }
     }
 }

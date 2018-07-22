@@ -1,65 +1,67 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using HRD_Api.Data;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using HRD_Api.Data;
 using HRD_DataLibrary.Models;
 
 namespace HRD_Api.Controllers
 {
     [Produces("application/json")]
-    [Route("api/resumes")]
-    public class ResumesController : Controller
+    [Route("api/Accounts")]
+    public class AccountsController : Controller
     {
         private readonly HRD_DbContext _context;
 
-        public ResumesController(HRD_DbContext context)
+        public AccountsController(HRD_DbContext context)
         {
             _context = context;
         }
 
-        // GET: api/resumes
+        // GET: api/Accounts
         [HttpGet]
-        public IEnumerable<Resume> GetResume()
+        public IEnumerable<Account> GetAccounts()
         {
-            return _context.Resumes;
+            return _context.Accounts;
         }
 
-        // GET: api/resumes/5
+        // GET: api/Accounts/5
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetResume([FromRoute] int id)
+        public async Task<IActionResult> GetAccount([FromRoute] int id)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var resume = await _context.Resumes.SingleOrDefaultAsync(m => m.ResumeId == id);
+            var account = await _context.Accounts.SingleOrDefaultAsync(m => m.AccountId == id);
 
-            if (resume == null)
+            if (account == null)
             {
                 return NotFound();
             }
 
-            return Ok(resume);
+            return Ok(account);
         }
 
-        // PUT: api/resumes/5
+        // PUT: api/Accounts/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutResume([FromRoute] int id, [FromBody] Resume resume)
+        public async Task<IActionResult> PutAccount([FromRoute] int id, [FromBody] Account account)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            if (id != resume.ResumeId)
+            if (id != account.AccountId)
             {
                 return BadRequest();
             }
 
-            _context.Entry(resume).State = EntityState.Modified;
+            _context.Entry(account).State = EntityState.Modified;
 
             try
             {
@@ -67,7 +69,7 @@ namespace HRD_Api.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!ResumeExists(id))
+                if (!AccountExists(id))
                 {
                     return NotFound();
                 }
@@ -80,45 +82,45 @@ namespace HRD_Api.Controllers
             return NoContent();
         }
 
-        // POST: api/resumes
+        // POST: api/Accounts
         [HttpPost]
-        public async Task<IActionResult> PostResume([FromBody] Resume resume)
+        public async Task<IActionResult> PostAccount([FromBody] Account account)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            _context.Resumes.Add(resume);
+            _context.Accounts.Add(account);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetResume", new { id = resume.ResumeId }, resume);
+            return CreatedAtAction("GetAccount", new { id = account.AccountId }, account);
         }
 
-        // DELETE: api/resumes/5
+        // DELETE: api/Accounts/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteResume([FromRoute] int id)
+        public async Task<IActionResult> DeleteAccount([FromRoute] int id)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var resume = await _context.Resumes.SingleOrDefaultAsync(m => m.ResumeId == id);
-            if (resume == null)
+            var account = await _context.Accounts.SingleOrDefaultAsync(m => m.AccountId == id);
+            if (account == null)
             {
                 return NotFound();
             }
 
-            _context.Resumes.Remove(resume);
+            _context.Accounts.Remove(account);
             await _context.SaveChangesAsync();
 
-            return Ok(resume);
+            return Ok(account);
         }
 
-        private bool ResumeExists(int id)
+        private bool AccountExists(int id)
         {
-            return _context.Resumes.Any(e => e.ResumeId == id);
+            return _context.Accounts.Any(e => e.AccountId == id);
         }
     }
 }
