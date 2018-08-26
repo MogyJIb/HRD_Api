@@ -1,10 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using HRD_Api.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using HRD_DataLibrary.Models;
+using Microsoft.EntityFrameworkCore.Internal;
+using HRD_DataLibrary.Errors;
 
 namespace HRD_Api.Controllers
 {
@@ -19,11 +22,17 @@ namespace HRD_Api.Controllers
             _context = context;
         }
 
-        // GET: api/departments
+        // GET: api/departments{?deleted=true}
         [HttpGet]
-        public IEnumerable<Department> GetDepartments()
+        public async Task<IActionResult> GetDepartments(string session, bool deleted = false)
         {
-            return _context.Departments;
+            if (HttpContext.Session.Keys.Contains(session))
+                return Json(_context.Departments.Where(department => department.Deleted == deleted));
+            else
+            {
+                Response.StatusCode = 403;
+                return Json(ErrorType.AuthanticationFaild);
+            }
         }
 
         // GET: api/departments/5

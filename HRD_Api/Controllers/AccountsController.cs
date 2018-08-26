@@ -1,17 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+
 using HRD_Api.Data;
+using HRD_DataLibrary.Errors;
+using HRD_DataLibrary.General;
 using HRD_DataLibrary.Models;
+using Microsoft.AspNetCore.Mvc;
+using HRD_Api.Extentions;
 
 namespace HRD_Api.Controllers
 {
     [Produces("application/json")]
-    [Route("api/Accounts")]
+    [Route("api/accounts")]
     public class AccountsController : Controller
     {
         private readonly HRD_DbContext _context;
@@ -21,106 +26,50 @@ namespace HRD_Api.Controllers
             _context = context;
         }
 
-        // GET: api/Accounts
-        [HttpGet]
-        public IEnumerable<Account> GetAccounts()
+        // POST: api/accounts/login
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] Account account)
         {
-            return _context.Accounts;
-        }
-
-        // GET: api/Accounts/5
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetAccount([FromRoute] int id)
-        {
-            if (!ModelState.IsValid)
+            if (_context.Accounts.Any(a => a.Login == account.Login))
             {
-                return BadRequest(ModelState);
-            }
+                string password = _context.Accounts
+                    .First(a => a.Login == account.Login)
+                    .Password;
 
-            var account = await _context.Accounts.SingleOrDefaultAsync(m => m.AccountId == id);
-
-            if (account == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(account);
-        }
-
-        // PUT: api/Accounts/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutAccount([FromRoute] int id, [FromBody] Account account)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            if (id != account.AccountId)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(account).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!AccountExists(id))
-                {
-                    return NotFound();
-                }
+                if (password == account.Password)
+                    return Json(Session());
                 else
                 {
-                    throw;
+                    Response.StatusCode = 412;
+                    return Json(ErrorType.WrongPassword);
                 }
             }
 
-            return NoContent();
+            Response.StatusCode = 412;
+            return Json(ErrorType.NonExistentLogin);
         }
 
-        // POST: api/Accounts
-        [HttpPost]
-        public async Task<IActionResult> PostAccount([FromBody] Account account)
+        // POST: api/accounts/register
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] Account account)
         {
-            if (!ModelState.IsValid)
+            if (!_context.Accounts.Any(a => a.Login == account.Login))
             {
-                return BadRequest(ModelState);
+                _context.Accounts.Add(account);
+                _context.SaveChanges();
+                
+                return Json(Session());
             }
-
-            _context.Accounts.Add(account);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetAccount", new { id = account.AccountId }, account);
+            Response.StatusCode = 412;
+            return Json(ErrorType.WrongPassword);
         }
 
-        // DELETE: api/Accounts/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteAccount([FromRoute] int id)
+        private AuthSession Session()
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var account = await _context.Accounts.SingleOrDefaultAsync(m => m.AccountId == id);
-            if (account == null)
-            {
-                return NotFound();
-            }
-
-            _context.Accounts.Remove(account);
-            await _context.SaveChangesAsync();
-
-            return Ok(account);
-        }
-
-        private bool AccountExists(int id)
-        {
-            return _context.Accounts.Any(e => e.AccountId == id);
+            AuthSession authSession = new AuthSession();
+            HttpContext.Session.Set<AuthSession>(authSession.Id, authSession);
+            bool a = HttpContext.Session.Keys.Contains(authSession.Id);
+            return authSession;
         }
     }
 }
