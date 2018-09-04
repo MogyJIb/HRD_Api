@@ -67,8 +67,7 @@ namespace HRD_Api.Controllers
         private AuthSession Session()
         {
             AuthSession authSession = new AuthSession();
-            HttpContext.Session.Set<AuthSession>(authSession.Id, authSession);
-            bool a = HttpContext.Session.Keys.Contains(authSession.Id);
+            SessionLogic.Instance.Add(authSession);
             return authSession;
         }
     }

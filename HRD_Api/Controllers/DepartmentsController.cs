@@ -22,11 +22,11 @@ namespace HRD_Api.Controllers
             _context = context;
         }
 
-        // GET: api/departments{?deleted=true}
+        // GET: api/departments{?deleted=false}
         [HttpGet]
         public async Task<IActionResult> GetDepartments(string session, bool deleted = false)
         {
-            if (HttpContext.Session.Keys.Contains(session))
+            if (SessionLogic.Instance.Valid(session))
                 return Json(_context.Departments.Where(department => department.Deleted == deleted));
             else
             {
