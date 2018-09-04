@@ -21,19 +21,27 @@ namespace HRD_Api.Data
 
         public static SessionLogic Instance => instance;
 
-        private ConcurrentBag<AuthSession> sessions = new ConcurrentBag<AuthSession>();
+        private ConcurrentDictionary<string, AuthSession> sessions = new ConcurrentDictionary<string, AuthSession>();
 
         public void Add(AuthSession authSession)
         {
-            if (!sessions.Contains(authSession)) sessions.Add(authSession);
+            if (!sessions.ContainsKey(authSession.Id)) sessions.TryAdd(authSession.Id, authSession);
         }
 
         public bool Valid(string sessionId)
         {
-            var foundSessions = sessions.Where(s => s.Id == sessionId).ToList();
-            return (foundSessions.Count == 1) 
-                ? (DateTime.Now.Subtract(foundSessions[0].StartDate).TotalSeconds < LIFETIME_SECONDS)
-                : false;
+            var foundSessions = sessions.Where(s => s.Key == sessionId).ToList();
+
+            if (foundSessions.Count != 1) return false;
+
+            var session = foundSessions[0].Value;
+            if (DateTime.Now.Subtract(session.StartDate).TotalSeconds > LIFETIME_SECONDS)
+            {
+                sessions.TryRemove(session.Id, out session);
+                return false;
+            }
+
+            return true;
         }
     }
 }
