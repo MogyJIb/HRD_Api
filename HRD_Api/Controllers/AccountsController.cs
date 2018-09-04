@@ -66,7 +66,7 @@ namespace HRD_Api.Controllers
 
         private AuthSession Session()
         {
-            AuthSession authSession = new AuthSession();
+            AuthSession authSession = AuthSession.GetInstance();
             SessionLogic.Instance.Add(authSession);
             return authSession;
         }
