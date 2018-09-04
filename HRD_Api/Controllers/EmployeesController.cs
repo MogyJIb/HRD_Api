@@ -45,7 +45,7 @@ namespace HRD_Api.Controllers
                 return Json(ErrorType.AuthanticationFaild);
             }
 
-            var employee = await _context.Employees.SingleOrDefaultAsync(m => m.EmployeetId == id);
+            var employee = await _context.Employees.SingleOrDefaultAsync(m => m.EmployeeId == id);
 
             if (employee == null)
             {
@@ -66,7 +66,7 @@ namespace HRD_Api.Controllers
                 return Json(ErrorType.AuthanticationFaild);
             }
 
-            if (id != employee.EmployeetId)
+            if (id != employee.EmployeeId)
             {
                 Response.StatusCode = 405;
                 return Json(ErrorType.NotFoundObject);
