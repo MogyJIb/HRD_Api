@@ -1,10 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using HRD_Api.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using HRD_DataLibrary.Models;
+using Microsoft.EntityFrameworkCore.Internal;
+using HRD_DataLibrary.Errors;
 
 namespace HRD_Api.Controllers
 {
@@ -19,44 +22,54 @@ namespace HRD_Api.Controllers
             _context = context;
         }
 
-        // GET: api/employees
+        // GET: api/employees{?deleted=false}
         [HttpGet]
-        public IEnumerable<Employee> GetEmployees()
+        public async Task<IActionResult> GetEmployees(string session, bool deleted = false)
         {
-            return _context.Employees;
+            if (!SessionLogic.Instance.Valid(session))
+            {
+                Response.StatusCode = 403;
+                return Json(ErrorType.AuthanticationFaild);
+            }
+
+            return Json(_context.Employees.Where(employee => employee.Deleted == deleted));
         }
 
         // GET: api/employees/5
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetEmployee([FromRoute] int id)
+        public async Task<IActionResult> GetEmployee(string session, [FromRoute] int id)
         {
-            if (!ModelState.IsValid)
+            if (!SessionLogic.Instance.Valid(session))
             {
-                return BadRequest(ModelState);
+                Response.StatusCode = 403;
+                return Json(ErrorType.AuthanticationFaild);
             }
 
-            var employee = await _context.Employees.SingleOrDefaultAsync(m => m.EmployeeId == id);
+            var employee = await _context.Employees.SingleOrDefaultAsync(m => m.EmployeetId == id);
 
             if (employee == null)
             {
-                return NotFound();
+                Response.StatusCode = 405;
+                return Json(ErrorType.NotFoundObject);
             }
 
-            return Ok(employee);
+            return Json(employee);
         }
 
         // PUT: api/employees/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutEmployee([FromRoute] int id, [FromBody] Employee employee)
+        public async Task<IActionResult> PutEmployee(string session, [FromRoute] int id, [FromBody] Employee employee)
         {
-            if (!ModelState.IsValid)
+            if (!SessionLogic.Instance.Valid(session))
             {
-                return BadRequest(ModelState);
+                Response.StatusCode = 403;
+                return Json(ErrorType.AuthanticationFaild);
             }
 
-            if (id != employee.EmployeeId)
+            if (id != employee.EmployeetId)
             {
-                return BadRequest();
+                Response.StatusCode = 405;
+                return Json(ErrorType.NotFoundObject);
             }
 
             _context.Entry(employee).State = EntityState.Modified;
@@ -64,56 +77,52 @@ namespace HRD_Api.Controllers
             try
             {
                 await _context.SaveChangesAsync();
+                return NoContent();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception)
             {
-                if (!EmployeeExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                Response.StatusCode = 500;
+                return Json(ErrorType.InternalError);
             }
-
-            return NoContent();
         }
 
         // POST: api/employees
         [HttpPost]
-        public async Task<IActionResult> PostEmployee([FromBody] Employee employee)
+        public async Task<IActionResult> PostEmployee(string session, [FromBody] Employee employee)
         {
-            if (!ModelState.IsValid)
+            if (!SessionLogic.Instance.Valid(session))
             {
-                return BadRequest(ModelState);
+                Response.StatusCode = 403;
+                return Json(ErrorType.AuthanticationFaild);
             }
 
             _context.Employees.Add(employee);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetEmployee", new { id = employee.EmployeeId }, employee);
+            return await GetEmployee(session, employee.EmployeeId);
         }
 
         // DELETE: api/employees/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteEmployee([FromRoute] int id)
+        public async Task<IActionResult> DeleteEmployee(string session, [FromRoute] int id)
         {
-            if (!ModelState.IsValid)
+            if (!SessionLogic.Instance.Valid(session))
             {
-                return BadRequest(ModelState);
+                Response.StatusCode = 403;
+                return Json(ErrorType.AuthanticationFaild);
             }
 
             var employee = await _context.Employees.SingleOrDefaultAsync(m => m.EmployeeId == id);
             if (employee == null)
             {
-                return NotFound();
+                Response.StatusCode = 405;
+                return Json(ErrorType.NotFoundObject);
             }
 
             _context.Employees.Remove(employee);
             await _context.SaveChangesAsync();
 
-            return Ok(employee);
+            return Json(employee);
         }
 
         private bool EmployeeExists(int id)

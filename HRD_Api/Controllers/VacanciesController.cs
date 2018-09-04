@@ -1,10 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using HRD_Api.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using HRD_DataLibrary.Models;
+using Microsoft.EntityFrameworkCore.Internal;
+using HRD_DataLibrary.Errors;
 
 namespace HRD_Api.Controllers
 {
@@ -19,44 +22,54 @@ namespace HRD_Api.Controllers
             _context = context;
         }
 
-        // GET: api/vacancies
+        // GET: api/vacancies{?deleted=false}
         [HttpGet]
-        public IEnumerable<Vacancy> GetVacancies()
+        public async Task<IActionResult> GetVacancies(string session, bool deleted = false)
         {
-            return _context.Vacancies;
+            if (!SessionLogic.Instance.Valid(session))
+            {
+                Response.StatusCode = 403;
+                return Json(ErrorType.AuthanticationFaild);
+            }
+
+            return Json(_context.Vacancies.Where(vacancy => vacancy.Deleted == deleted));
         }
 
         // GET: api/vacancies/5
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetVacancy([FromRoute] int id)
+        public async Task<IActionResult> GetVacancy(string session, [FromRoute] int id)
         {
-            if (!ModelState.IsValid)
+            if (!SessionLogic.Instance.Valid(session))
             {
-                return BadRequest(ModelState);
+                Response.StatusCode = 403;
+                return Json(ErrorType.AuthanticationFaild);
             }
 
             var vacancy = await _context.Vacancies.SingleOrDefaultAsync(m => m.VacancyId == id);
 
             if (vacancy == null)
             {
-                return NotFound();
+                Response.StatusCode = 405;
+                return Json(ErrorType.NotFoundObject);
             }
 
-            return Ok(vacancy);
+            return Json(vacancy);
         }
 
         // PUT: api/vacancies/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutVacancy([FromRoute] int id, [FromBody] Vacancy vacancy)
+        public async Task<IActionResult> PutVacancy(string session, [FromRoute] int id, [FromBody] Vacancy vacancy)
         {
-            if (!ModelState.IsValid)
+            if (!SessionLogic.Instance.Valid(session))
             {
-                return BadRequest(ModelState);
+                Response.StatusCode = 403;
+                return Json(ErrorType.AuthanticationFaild);
             }
 
             if (id != vacancy.VacancyId)
             {
-                return BadRequest();
+                Response.StatusCode = 405;
+                return Json(ErrorType.NotFoundObject);
             }
 
             _context.Entry(vacancy).State = EntityState.Modified;
@@ -64,56 +77,52 @@ namespace HRD_Api.Controllers
             try
             {
                 await _context.SaveChangesAsync();
+                return NoContent();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception)
             {
-                if (!VacancyExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                Response.StatusCode = 500;
+                return Json(ErrorType.InternalError);
             }
-
-            return NoContent();
         }
 
         // POST: api/vacancies
         [HttpPost]
-        public async Task<IActionResult> PostVacancy([FromBody] Vacancy vacancy)
+        public async Task<IActionResult> PostVacancy(string session, [FromBody] Vacancy vacancy)
         {
-            if (!ModelState.IsValid)
+            if (!SessionLogic.Instance.Valid(session))
             {
-                return BadRequest(ModelState);
+                Response.StatusCode = 403;
+                return Json(ErrorType.AuthanticationFaild);
             }
 
             _context.Vacancies.Add(vacancy);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetVacancy", new { id = vacancy.VacancyId }, vacancy);
+            return await GetVacancy(session, vacancy.VacancyId);
         }
 
         // DELETE: api/vacancies/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteVacancy([FromRoute] int id)
+        public async Task<IActionResult> DeleteVacancy(string session, [FromRoute] int id)
         {
-            if (!ModelState.IsValid)
+            if (!SessionLogic.Instance.Valid(session))
             {
-                return BadRequest(ModelState);
+                Response.StatusCode = 403;
+                return Json(ErrorType.AuthanticationFaild);
             }
 
             var vacancy = await _context.Vacancies.SingleOrDefaultAsync(m => m.VacancyId == id);
             if (vacancy == null)
             {
-                return NotFound();
+                Response.StatusCode = 405;
+                return Json(ErrorType.NotFoundObject);
             }
 
             _context.Vacancies.Remove(vacancy);
             await _context.SaveChangesAsync();
 
-            return Ok(vacancy);
+            return Json(vacancy);
         }
 
         private bool VacancyExists(int id)

@@ -1,10 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using HRD_Api.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using HRD_DataLibrary.Models;
+using Microsoft.EntityFrameworkCore.Internal;
+using HRD_DataLibrary.Errors;
 
 namespace HRD_Api.Controllers
 {
@@ -19,44 +22,54 @@ namespace HRD_Api.Controllers
             _context = context;
         }
 
-        // GET: api/worked_times
+        // GET: api/worked_times{?deleted=false}
         [HttpGet]
-        public IEnumerable<WorkedTime> GetWorkedTime()
+        public async Task<IActionResult> GetWorkedTimes(string session, bool deleted = false)
         {
-            return _context.WorkedTimes;
+            if (!SessionLogic.Instance.Valid(session))
+            {
+                Response.StatusCode = 403;
+                return Json(ErrorType.AuthanticationFaild);
+            }
+
+            return Json(_context.WorkedTimes.Where(workedTime => workedTime.Deleted == deleted));
         }
 
         // GET: api/worked_times/5
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetWorkedTime([FromRoute] int id)
+        public async Task<IActionResult> GetWorkedTime(string session, [FromRoute] int id)
         {
-            if (!ModelState.IsValid)
+            if (!SessionLogic.Instance.Valid(session))
             {
-                return BadRequest(ModelState);
+                Response.StatusCode = 403;
+                return Json(ErrorType.AuthanticationFaild);
             }
 
             var workedTime = await _context.WorkedTimes.SingleOrDefaultAsync(m => m.WorkedTimeId == id);
 
             if (workedTime == null)
             {
-                return NotFound();
+                Response.StatusCode = 405;
+                return Json(ErrorType.NotFoundObject);
             }
 
-            return Ok(workedTime);
+            return Json(workedTime);
         }
 
         // PUT: api/worked_times/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutWorkedTime([FromRoute] int id, [FromBody] WorkedTime workedTime)
+        public async Task<IActionResult> PutWorkedTime(string session, [FromRoute] int id, [FromBody] WorkedTime workedTime)
         {
-            if (!ModelState.IsValid)
+            if (!SessionLogic.Instance.Valid(session))
             {
-                return BadRequest(ModelState);
+                Response.StatusCode = 403;
+                return Json(ErrorType.AuthanticationFaild);
             }
 
             if (id != workedTime.WorkedTimeId)
             {
-                return BadRequest();
+                Response.StatusCode = 405;
+                return Json(ErrorType.NotFoundObject);
             }
 
             _context.Entry(workedTime).State = EntityState.Modified;
@@ -64,56 +77,52 @@ namespace HRD_Api.Controllers
             try
             {
                 await _context.SaveChangesAsync();
+                return NoContent();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception)
             {
-                if (!WorkedTimeExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                Response.StatusCode = 500;
+                return Json(ErrorType.InternalError);
             }
-
-            return NoContent();
         }
 
         // POST: api/worked_times
         [HttpPost]
-        public async Task<IActionResult> PostWorkedTime([FromBody] WorkedTime workedTime)
+        public async Task<IActionResult> PostWorkedTime(string session, [FromBody] WorkedTime workedTime)
         {
-            if (!ModelState.IsValid)
+            if (!SessionLogic.Instance.Valid(session))
             {
-                return BadRequest(ModelState);
+                Response.StatusCode = 403;
+                return Json(ErrorType.AuthanticationFaild);
             }
 
             _context.WorkedTimes.Add(workedTime);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetWorkedTime", new { id = workedTime.WorkedTimeId }, workedTime);
+            return await GetWorkedTime(session, workedTime.WorkedTimeId);
         }
 
         // DELETE: api/worked_times/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteWorkedTime([FromRoute] int id)
+        public async Task<IActionResult> DeleteWorkedTime(string session, [FromRoute] int id)
         {
-            if (!ModelState.IsValid)
+            if (!SessionLogic.Instance.Valid(session))
             {
-                return BadRequest(ModelState);
+                Response.StatusCode = 403;
+                return Json(ErrorType.AuthanticationFaild);
             }
 
             var workedTime = await _context.WorkedTimes.SingleOrDefaultAsync(m => m.WorkedTimeId == id);
             if (workedTime == null)
             {
-                return NotFound();
+                Response.StatusCode = 405;
+                return Json(ErrorType.NotFoundObject);
             }
 
             _context.WorkedTimes.Remove(workedTime);
             await _context.SaveChangesAsync();
 
-            return Ok(workedTime);
+            return Json(workedTime);
         }
 
         private bool WorkedTimeExists(int id)

@@ -1,10 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using HRD_Api.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using HRD_DataLibrary.Models;
+using Microsoft.EntityFrameworkCore.Internal;
+using HRD_DataLibrary.Errors;
 
 namespace HRD_Api.Controllers
 {
@@ -19,44 +22,54 @@ namespace HRD_Api.Controllers
             _context = context;
         }
 
-        // GET: api/fired_employees
+        // GET: api/fired_employees{?deleted=false}
         [HttpGet]
-        public IEnumerable<FiredEmployee> GetFiredEmployees()
+        public async Task<IActionResult> GetFiredEmployees(string session, bool deleted = false)
         {
-            return _context.FiredEmployees;
+            if (!SessionLogic.Instance.Valid(session))
+            {
+                Response.StatusCode = 403;
+                return Json(ErrorType.AuthanticationFaild);
+            }
+
+            return Json(_context.FiredEmployees.Where(firedEmployee => firedEmployee.Deleted == deleted));
         }
 
         // GET: api/fired_employees/5
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetFiredEmployee([FromRoute] int id)
+        public async Task<IActionResult> GetFiredEmployee(string session, [FromRoute] int id)
         {
-            if (!ModelState.IsValid)
+            if (!SessionLogic.Instance.Valid(session))
             {
-                return BadRequest(ModelState);
+                Response.StatusCode = 403;
+                return Json(ErrorType.AuthanticationFaild);
             }
 
             var firedEmployee = await _context.FiredEmployees.SingleOrDefaultAsync(m => m.FiredEmployeeId == id);
 
             if (firedEmployee == null)
             {
-                return NotFound();
+                Response.StatusCode = 405;
+                return Json(ErrorType.NotFoundObject);
             }
 
-            return Ok(firedEmployee);
+            return Json(firedEmployee);
         }
 
         // PUT: api/fired_employees/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutFiredEmployee([FromRoute] int id, [FromBody] FiredEmployee firedEmployee)
+        public async Task<IActionResult> PutFiredEmployee(string session, [FromRoute] int id, [FromBody] FiredEmployee firedEmployee)
         {
-            if (!ModelState.IsValid)
+            if (!SessionLogic.Instance.Valid(session))
             {
-                return BadRequest(ModelState);
+                Response.StatusCode = 403;
+                return Json(ErrorType.AuthanticationFaild);
             }
 
             if (id != firedEmployee.FiredEmployeeId)
             {
-                return BadRequest();
+                Response.StatusCode = 405;
+                return Json(ErrorType.NotFoundObject);
             }
 
             _context.Entry(firedEmployee).State = EntityState.Modified;
@@ -64,56 +77,52 @@ namespace HRD_Api.Controllers
             try
             {
                 await _context.SaveChangesAsync();
+                return NoContent();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception)
             {
-                if (!FiredEmployeeExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                Response.StatusCode = 500;
+                return Json(ErrorType.InternalError);
             }
-
-            return NoContent();
         }
 
         // POST: api/fired_employees
         [HttpPost]
-        public async Task<IActionResult> PostFiredEmployee([FromBody] FiredEmployee firedEmployee)
+        public async Task<IActionResult> PostFiredEmployee(string session, [FromBody] FiredEmployee firedEmployee)
         {
-            if (!ModelState.IsValid)
+            if (!SessionLogic.Instance.Valid(session))
             {
-                return BadRequest(ModelState);
+                Response.StatusCode = 403;
+                return Json(ErrorType.AuthanticationFaild);
             }
 
             _context.FiredEmployees.Add(firedEmployee);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetFiredEmployee", new { id = firedEmployee.FiredEmployeeId }, firedEmployee);
+            return await GetFiredEmployee(session, firedEmployee.FiredEmployeeId);
         }
 
         // DELETE: api/fired_employees/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteFiredEmployee([FromRoute] int id)
+        public async Task<IActionResult> DeleteFiredEmployee(string session, [FromRoute] int id)
         {
-            if (!ModelState.IsValid)
+            if (!SessionLogic.Instance.Valid(session))
             {
-                return BadRequest(ModelState);
+                Response.StatusCode = 403;
+                return Json(ErrorType.AuthanticationFaild);
             }
 
             var firedEmployee = await _context.FiredEmployees.SingleOrDefaultAsync(m => m.FiredEmployeeId == id);
             if (firedEmployee == null)
             {
-                return NotFound();
+                Response.StatusCode = 405;
+                return Json(ErrorType.NotFoundObject);
             }
 
             _context.FiredEmployees.Remove(firedEmployee);
             await _context.SaveChangesAsync();
 
-            return Ok(firedEmployee);
+            return Json(firedEmployee);
         }
 
         private bool FiredEmployeeExists(int id)
