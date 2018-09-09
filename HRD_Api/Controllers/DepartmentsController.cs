@@ -119,10 +119,19 @@ namespace HRD_Api.Controllers
                 return Json(ErrorType.NotFoundObject);
             }
 
-            _context.Departments.Remove(department);
-            await _context.SaveChangesAsync();
+            department.Deleted = true;
+            _context.Entry(department).State = EntityState.Modified;
 
-            return Json(department);
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Json(department);
+            }
+            catch (Exception)
+            {
+                Response.StatusCode = 500;
+                return Json(ErrorType.InternalError);
+            }
         }
 
         private bool DepartmentExists(int id)
