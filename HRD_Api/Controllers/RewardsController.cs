@@ -119,10 +119,19 @@ namespace HRD_Api.Controllers
                 return Json(ErrorType.NotFoundObject);
             }
 
-            _context.Rewards.Remove(reward);
-            await _context.SaveChangesAsync();
+            reward.Deleted = true;
+            _context.Entry(reward).State = EntityState.Modified;
 
-            return Json(reward);
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Json(reward);
+            }
+            catch (Exception)
+            {
+                Response.StatusCode = 500;
+                return Json(ErrorType.InternalError);
+            }
         }
 
         private bool RewardExists(int id)

@@ -119,10 +119,19 @@ namespace HRD_Api.Controllers
                 return Json(ErrorType.NotFoundObject);
             }
 
-            _context.FiredEmployees.Remove(firedEmployee);
-            await _context.SaveChangesAsync();
+            firedEmployee.Deleted = true;
+            _context.Entry(firedEmployee).State = EntityState.Modified;
 
-            return Json(firedEmployee);
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Json(firedEmployee);
+            }
+            catch (Exception)
+            {
+                Response.StatusCode = 500;
+                return Json(ErrorType.InternalError);
+            }
         }
 
         private bool FiredEmployeeExists(int id)

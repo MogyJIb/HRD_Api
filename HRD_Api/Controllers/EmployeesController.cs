@@ -119,10 +119,19 @@ namespace HRD_Api.Controllers
                 return Json(ErrorType.NotFoundObject);
             }
 
-            _context.Employees.Remove(employee);
-            await _context.SaveChangesAsync();
+            employee.Deleted = true;
+            _context.Entry(employee).State = EntityState.Modified;
 
-            return Json(employee);
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Json(employee);
+            }
+            catch (Exception)
+            {
+                Response.StatusCode = 500;
+                return Json(ErrorType.InternalError);
+            }
         }
 
         private bool EmployeeExists(int id)

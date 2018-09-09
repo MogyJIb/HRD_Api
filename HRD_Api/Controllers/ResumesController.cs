@@ -119,10 +119,19 @@ namespace HRD_Api.Controllers
                 return Json(ErrorType.NotFoundObject);
             }
 
-            _context.Resumes.Remove(resume);
-            await _context.SaveChangesAsync();
+            resume.Deleted = true;
+            _context.Entry(resume).State = EntityState.Modified;
 
-            return Json(resume);
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Json(resume);
+            }
+            catch (Exception)
+            {
+                Response.StatusCode = 500;
+                return Json(ErrorType.InternalError);
+            }
         }
 
         private bool ResumeExists(int id)

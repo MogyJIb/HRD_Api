@@ -119,10 +119,19 @@ namespace HRD_Api.Controllers
                 return Json(ErrorType.NotFoundObject);
             }
 
-            _context.Positions.Remove(position);
-            await _context.SaveChangesAsync();
+            position.Deleted = true;
+            _context.Entry(position).State = EntityState.Modified;
 
-            return Json(position);
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Json(position);
+            }
+            catch (Exception)
+            {
+                Response.StatusCode = 500;
+                return Json(ErrorType.InternalError);
+            }
         }
 
         private bool PositionExists(int id)

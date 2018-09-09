@@ -119,10 +119,19 @@ namespace HRD_Api.Controllers
                 return Json(ErrorType.NotFoundObject);
             }
 
-            _context.Vacancies.Remove(vacancy);
-            await _context.SaveChangesAsync();
+            vacancy.Deleted = true;
+            _context.Entry(vacancy).State = EntityState.Modified;
 
-            return Json(vacancy);
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Json(vacancy);
+            }
+            catch (Exception)
+            {
+                Response.StatusCode = 500;
+                return Json(ErrorType.InternalError);
+            }
         }
 
         private bool VacancyExists(int id)

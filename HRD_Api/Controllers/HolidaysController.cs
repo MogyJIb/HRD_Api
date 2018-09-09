@@ -119,10 +119,19 @@ namespace HRD_Api.Controllers
                 return Json(ErrorType.NotFoundObject);
             }
 
-            _context.Holidays.Remove(holiday);
-            await _context.SaveChangesAsync();
+            holiday.Deleted = true;
+            _context.Entry(holiday).State = EntityState.Modified;
 
-            return Json(holiday);
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Json(holiday);
+            }
+            catch (Exception)
+            {
+                Response.StatusCode = 500;
+                return Json(ErrorType.InternalError);
+            }
         }
 
         private bool HolidayExists(int id)

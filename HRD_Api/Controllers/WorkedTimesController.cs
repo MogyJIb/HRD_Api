@@ -119,10 +119,19 @@ namespace HRD_Api.Controllers
                 return Json(ErrorType.NotFoundObject);
             }
 
-            _context.WorkedTimes.Remove(workedTime);
-            await _context.SaveChangesAsync();
+            workedTime.Deleted = true;
+            _context.Entry(workedTime).State = EntityState.Modified;
 
-            return Json(workedTime);
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Json(workedTime);
+            }
+            catch (Exception)
+            {
+                Response.StatusCode = 500;
+                return Json(ErrorType.InternalError);
+            }
         }
 
         private bool WorkedTimeExists(int id)
