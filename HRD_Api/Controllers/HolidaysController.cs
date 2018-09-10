@@ -34,7 +34,9 @@ namespace HRD_Api.Controllers
 
             return Json(_context.Holidays
                 .Where(holiday => holiday.Deleted == deleted)
-                .Include(t => t.Employee));
+                .Include(t => t.Employee)
+                .ThenInclude(e => e.Position)
+                .ThenInclude(p => p.Department));
         }
 
         // GET: api/holidays/5
@@ -49,6 +51,8 @@ namespace HRD_Api.Controllers
 
             var holiday = await _context.Holidays
                 .Include(t => t.Employee)
+                .ThenInclude(e => e.Position)
+                .ThenInclude(p => p.Department)
                 .SingleOrDefaultAsync(m => m.HolidayId == id);
 
             if (holiday == null)
@@ -118,6 +122,8 @@ namespace HRD_Api.Controllers
 
             var holiday = await _context.Holidays
                 .Include(t => t.Employee)
+                .ThenInclude(e => e.Position)
+                .ThenInclude(p => p.Department)
                 .SingleOrDefaultAsync(m => m.HolidayId == id);
 
             if (holiday == null)

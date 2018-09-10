@@ -34,7 +34,9 @@ namespace HRD_Api.Controllers
 
             return Json(_context.FiredEmployees
                 .Where(firedEmployee => firedEmployee.Deleted == deleted)
-                .Include(t => t.Employee));
+                .Include(t => t.Employee)
+                .ThenInclude(e => e.Position)
+                .ThenInclude(p => p.Department));
         }
 
         // GET: api/fired_employees/5
@@ -49,6 +51,8 @@ namespace HRD_Api.Controllers
 
             var firedEmployee = await _context.FiredEmployees
                 .Include(t => t.Employee)
+                .ThenInclude(e => e.Position)
+                .ThenInclude(p => p.Department)
                 .SingleOrDefaultAsync(m => m.FiredEmployeeId == id);
 
             if (firedEmployee == null)
@@ -118,6 +122,8 @@ namespace HRD_Api.Controllers
 
             var firedEmployee = await _context.FiredEmployees
                 .Include(t => t.Employee)
+                .ThenInclude(e => e.Position)
+                .ThenInclude(p => p.Department)
                 .SingleOrDefaultAsync(m => m.FiredEmployeeId == id);
 
             if (firedEmployee == null)

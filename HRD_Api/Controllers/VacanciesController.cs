@@ -34,7 +34,8 @@ namespace HRD_Api.Controllers
 
             return Json(_context.Vacancies
                 .Where(vacancy => vacancy.Deleted == deleted)
-                .Include(t => t.Position));
+                .Include(t => t.Position)
+                .ThenInclude(p => p.Department));
         }
 
         // GET: api/vacancies/5
@@ -49,6 +50,7 @@ namespace HRD_Api.Controllers
 
             var vacancy = await _context.Vacancies
                 .Include(t => t.Position)
+                .ThenInclude(p => p.Department)
                 .SingleOrDefaultAsync(m => m.VacancyId == id);
 
             if (vacancy == null)
@@ -118,6 +120,7 @@ namespace HRD_Api.Controllers
 
             var vacancy = await _context.Vacancies
                 .Include(t => t.Position)
+                .ThenInclude(p => p.Department)
                 .SingleOrDefaultAsync(m => m.VacancyId == id);
 
             if (vacancy == null)

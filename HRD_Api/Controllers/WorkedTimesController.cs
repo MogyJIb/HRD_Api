@@ -34,7 +34,9 @@ namespace HRD_Api.Controllers
 
             return Json(_context.WorkedTimes
                 .Where(workedTime => workedTime.Deleted == deleted)
-                .Include(t => t.Employee));
+                .Include(t => t.Employee)
+                .ThenInclude(e => e.Position)
+                .ThenInclude(p => p.Department));
         }
 
         // GET: api/worked_times/5
@@ -49,6 +51,8 @@ namespace HRD_Api.Controllers
 
             var workedTime = await _context.WorkedTimes
                 .Include(t => t.Employee)
+                .ThenInclude(e => e.Position)
+                .ThenInclude(p => p.Department)
                 .SingleOrDefaultAsync(m => m.WorkedTimeId == id);
 
             if (workedTime == null)
@@ -118,6 +122,8 @@ namespace HRD_Api.Controllers
 
             var workedTime = await _context.WorkedTimes
                 .Include(t => t.Employee)
+                .ThenInclude(e => e.Position)
+                .ThenInclude(p => p.Department)
                 .SingleOrDefaultAsync(m => m.WorkedTimeId == id);
 
             if (workedTime == null)
