@@ -32,7 +32,9 @@ namespace HRD_Api.Controllers
                 return Json(ErrorType.AuthanticationFaild);
             }
 
-            return Json(_context.Employees.Where(employee => employee.Deleted == deleted));
+            return Json(_context.Employees
+                .Where(employee => employee.Deleted == deleted)
+                .Include(t => t.Position));
         }
 
         // GET: api/employees/5
@@ -45,7 +47,9 @@ namespace HRD_Api.Controllers
                 return Json(ErrorType.AuthanticationFaild);
             }
 
-            var employee = await _context.Employees.SingleOrDefaultAsync(m => m.EmployeeId == id);
+            var employee = await _context.Employees
+                .Include(t => t.Position)
+                .SingleOrDefaultAsync(m => m.EmployeeId == id);
 
             if (employee == null)
             {
@@ -112,7 +116,10 @@ namespace HRD_Api.Controllers
                 return Json(ErrorType.AuthanticationFaild);
             }
 
-            var employee = await _context.Employees.SingleOrDefaultAsync(m => m.EmployeeId == id);
+            var employee = await _context.Employees
+                .Include(t => t.Position)
+                .SingleOrDefaultAsync(m => m.EmployeeId == id);
+
             if (employee == null)
             {
                 Response.StatusCode = 405;

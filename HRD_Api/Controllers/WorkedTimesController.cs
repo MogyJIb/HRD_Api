@@ -32,7 +32,9 @@ namespace HRD_Api.Controllers
                 return Json(ErrorType.AuthanticationFaild);
             }
 
-            return Json(_context.WorkedTimes.Where(workedTime => workedTime.Deleted == deleted));
+            return Json(_context.WorkedTimes
+                .Where(workedTime => workedTime.Deleted == deleted)
+                .Include(t => t.Employee));
         }
 
         // GET: api/worked_times/5
@@ -45,7 +47,9 @@ namespace HRD_Api.Controllers
                 return Json(ErrorType.AuthanticationFaild);
             }
 
-            var workedTime = await _context.WorkedTimes.SingleOrDefaultAsync(m => m.WorkedTimeId == id);
+            var workedTime = await _context.WorkedTimes
+                .Include(t => t.Employee)
+                .SingleOrDefaultAsync(m => m.WorkedTimeId == id);
 
             if (workedTime == null)
             {
@@ -112,7 +116,10 @@ namespace HRD_Api.Controllers
                 return Json(ErrorType.AuthanticationFaild);
             }
 
-            var workedTime = await _context.WorkedTimes.SingleOrDefaultAsync(m => m.WorkedTimeId == id);
+            var workedTime = await _context.WorkedTimes
+                .Include(t => t.Employee)
+                .SingleOrDefaultAsync(m => m.WorkedTimeId == id);
+
             if (workedTime == null)
             {
                 Response.StatusCode = 405;

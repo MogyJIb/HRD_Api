@@ -32,7 +32,9 @@ namespace HRD_Api.Controllers
                 return Json(ErrorType.AuthanticationFaild);
             }
 
-            return Json(_context.Holidays.Where(holiday => holiday.Deleted == deleted));
+            return Json(_context.Holidays
+                .Where(holiday => holiday.Deleted == deleted)
+                .Include(t => t.Employee));
         }
 
         // GET: api/holidays/5
@@ -45,7 +47,9 @@ namespace HRD_Api.Controllers
                 return Json(ErrorType.AuthanticationFaild);
             }
 
-            var holiday = await _context.Holidays.SingleOrDefaultAsync(m => m.HolidayId == id);
+            var holiday = await _context.Holidays
+                .Include(t => t.Employee)
+                .SingleOrDefaultAsync(m => m.HolidayId == id);
 
             if (holiday == null)
             {
@@ -112,7 +116,10 @@ namespace HRD_Api.Controllers
                 return Json(ErrorType.AuthanticationFaild);
             }
 
-            var holiday = await _context.Holidays.SingleOrDefaultAsync(m => m.HolidayId == id);
+            var holiday = await _context.Holidays
+                .Include(t => t.Employee)
+                .SingleOrDefaultAsync(m => m.HolidayId == id);
+
             if (holiday == null)
             {
                 Response.StatusCode = 405;

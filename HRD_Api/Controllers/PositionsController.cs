@@ -32,7 +32,9 @@ namespace HRD_Api.Controllers
                 return Json(ErrorType.AuthanticationFaild);
             }
 
-            return Json(_context.Positions.Where(position => position.Deleted == deleted));
+            return Json(_context.Positions
+                .Where(position => position.Deleted == deleted)
+                .Include(t => t.Department));
         }
 
         // GET: api/positions/5
@@ -45,7 +47,9 @@ namespace HRD_Api.Controllers
                 return Json(ErrorType.AuthanticationFaild);
             }
 
-            var position = await _context.Positions.SingleOrDefaultAsync(m => m.PositionId == id);
+            var position = await _context.Positions
+                .Include(t => t.Department)
+                .SingleOrDefaultAsync(m => m.PositionId == id);
 
             if (position == null)
             {
@@ -112,7 +116,10 @@ namespace HRD_Api.Controllers
                 return Json(ErrorType.AuthanticationFaild);
             }
 
-            var position = await _context.Positions.SingleOrDefaultAsync(m => m.PositionId == id);
+            var position = await _context.Positions
+                .Include(t => t.Department)
+                .SingleOrDefaultAsync(m => m.PositionId == id);
+
             if (position == null)
             {
                 Response.StatusCode = 405;
