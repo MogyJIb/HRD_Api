@@ -34,6 +34,7 @@ namespace HRD_Api.Controllers
 
             return Json(_context.Employees
                 .Where(employee => employee.Deleted == deleted)
+                .Where(employee => !_context.FiredEmployees.Any(fired => fired.EmployeeId == employee.EmployeeId))
                 .Include(t => t.Position)
                 .ThenInclude(p => p.Department));
         }
