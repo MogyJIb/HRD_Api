@@ -22,7 +22,7 @@ namespace HRD_Api.Controllers
             _context = context;
         }
 
-        // GET: api/employees{?deleted=false}
+        // GET: api/employees{?session=13asd1231ss&deleted=false}
         [HttpGet]
         public async Task<IActionResult> GetEmployees(string session, bool deleted = false)
         {
@@ -39,7 +39,7 @@ namespace HRD_Api.Controllers
                 .ThenInclude(p => p.Department));
         }
 
-        // GET: api/employees/5
+        // GET: api/employees/5?session=awewe
         [HttpGet("{id}")]
         public async Task<IActionResult> GetEmployee(string session, [FromRoute] int id)
         {

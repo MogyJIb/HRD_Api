@@ -61,7 +61,7 @@ namespace HRD_Api.Controllers
                 return Json(Session());
             }
             Response.StatusCode = 412;
-            return Json(ErrorType.WrongPassword);
+            return Json(ErrorType.NonExistentLogin);
         }
 
         private AuthSession Session()
